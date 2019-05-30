@@ -66,6 +66,7 @@ static void swap_nodes(node_t *a, node_t *b)
 	b->pri = tmp;
 }
 
+/* log n insertion */
 static int _insert(heap_t *heap, node_t *cur, node_t *new)
 {
 	int retval;
@@ -127,11 +128,11 @@ static void _destroy_nodes(node_t *node)
 void heap_destroy(heap_t *heap)
 {
 	if (heap) {
+		stack_destroy(heap->inserted);
 		_destroy_nodes(heap->root);
 		// just clear the heap in case they 
 		// try to use it for shit afterwards
 		memset(heap, 0, sizeof(heap_t));
-		stack_destroy(heap->inserted);
 		free(heap);
 	}
 }
@@ -159,6 +160,7 @@ static void _sift_down(heap_t *heap, node_t *node)
 	}
 }
 
+/* log n deletion, (fix up and sift down) */
 void *heap_del(heap_t *heap)
 {
 	if (heap->root) {

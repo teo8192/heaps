@@ -10,7 +10,7 @@ int cmpfunc(int *a, int *b)
 
 int main()
 {
-	int len = 10;
+	int len = 20;
 	int data[len];
 	srand(time(NULL));
 	heap_t *heap = heap_new((int(*)(void*,void*)) cmpfunc, 1);
@@ -21,11 +21,24 @@ int main()
 	}
 	heap_plot(heap);
 	getchar();
-	for (int i = 0; i < len; ++i) {
-		printf("%d\n", *(int*)heap_del(heap));
+
+	for (int i = 0; i < len >> 1; ++i) {
+		data[i] = rand() % len;
+		heap_del(heap);
 		heap_plot(heap);
 		getchar();
 	}
+	heap_plot(heap);
+	getchar();
+
+	for (int i = 0; i < len; ++i) {
+		data[i] = rand() % len;
+		heap_insert(heap, &data[i], &data[i]);
+		heap_plot(heap);
+		getchar();
+	}
+	heap_plot(heap);
+	getchar();
 
 	heap_destroy(heap);
 }

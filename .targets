@@ -1,1 +1,1 @@
-target heap heap.c main.c plot.c
+target heap heap.c main.c plot.c stack.c

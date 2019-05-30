@@ -58,8 +58,10 @@ int main(int argc, char **argv)
 
 	while (running) {
 		scanf("%s", input);
-		if (!strcmp(input, "exit"))
-			exit(0);
+		if (!strcmp(input, "exit")) {
+			running = 0;
+			break;
+		}
 		if (!strcmp(input, "get")) {
 			int *val = heap_del(heap);
 			if (val)

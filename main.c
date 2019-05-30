@@ -52,6 +52,8 @@ int main(int argc, char **argv)
 	srand(time(NULL));
 	heap_t *heap = heap_new((int(*)(void*,void*)) cmpfunc, min);
 
+	printf("Commands:\nadd [number]\t - adds the munber to the heap\nget\t\t - returns the maximum/minimum number\nexit\t\t - exits\n");
+
 	int running = 1;
 	char input[250];
 	int inpt;

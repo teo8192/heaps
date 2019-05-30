@@ -6,7 +6,6 @@
 typedef struct node {
 	struct node *left, *right;
 	void *pri, *elem;
-	unsigned int btmsk;
 } node_t;
 
 struct heap {
@@ -15,9 +14,6 @@ struct heap {
 	int min;
 	cmpfunc_t cmpfunc;
 };
-
-#define GORIGHT(x) ((x) & (1 << 2))
-#define NUMCHILD(x) ((x) & ((1 << 2) - 1))
 
 heap_t *heap_new(cmpfunc_t cmpfunc, int min)
 {
@@ -41,20 +37,40 @@ node_t *node_new(void *pri, void *elem)
 
 	new->left = NULL;
 	new->right = NULL;
-	new->btmsk = 0;
 
 	return new;
 }
 
-static void swap_nodes(node_t *a, node_t *b)
+static node_t *_insert(heap_t *heap, node_t *cur, node_t *new, int n, int l)
 {
-	void *tmp = a->elem;
-	a->elem = b->elem;
-	b->elem = tmp;
+	if (!cur)
+		return new;
 
-	tmp = a->pri;
-	a->pri = b->pri;
-	b->pri = tmp;
+	l >>= 1;
+	if (!(l & n)) {
+		if ((heap->cmpfunc(new->pri, cur->pri) < 0) ==  heap->min) {
+			new->left = cur->left;
+			cur->left = NULL;
+			new->right = cur->right;
+			cur->right = NULL;
+			new->left = _insert(heap, new->left, cur, n, l);
+			return new;
+		}
+
+		cur->left = _insert(heap, cur->left, new, n, l);
+	} else {
+		if ((heap->cmpfunc(new->pri, cur->pri) < 0) ==  heap->min) {
+			new->right = cur->right;
+			cur->right = NULL;
+			new->left = cur->left;
+			cur->left = NULL;
+			new->right = _insert(heap, new->right, cur, n, l);
+			return new;
+		}
+
+		cur->right = _insert(heap, cur->right, new, n, l);
+	}
+	return cur;
 }
 
 static void convert(int *n, int *lev)
@@ -66,70 +82,13 @@ static void convert(int *n, int *lev)
 	}
 }
 
-static int _insert(heap_t *heap, node_t *cur, node_t *new)
-{
-	if (!cur->left) {
-		// insert in the left
-		cur->left = new;
-		cur->btmsk |= (1 << 2); // turn on go right
-
-		cur->btmsk &= ~((1 << 2) - 1);
-		cur->btmsk |= 1; // one child
-
-		if ((heap->cmpfunc(cur->pri, new->pri) > 0) == heap->min)
-			swap_nodes(cur, new);
-
-		return 0;
-	} else if (!cur->right) {
-		// insert to the right
-		cur->right = new;
-		cur->btmsk &= ~(1 << 2); // turn of go right
-
-		cur->btmsk &= ~((1 << 2) - 1);
-		cur->btmsk |= 2; // two childs
-
-		if ((heap->cmpfunc(cur->pri, new->pri) > 0) == heap->min)
-			swap_nodes(cur, new);
-
-		return 1;
-	} else {
-		if (GORIGHT(cur->btmsk)) {
-			// go right
-			int retval = _insert(heap, cur->right, new);
-
-			if (retval) {
-				cur->btmsk &= ~(1 << 2); // turn of go right
-				retval &= 1;
-			}
-			
-			if ((heap->cmpfunc(cur->pri, cur->right->pri) > 0) == heap->min)
-				swap_nodes(cur, cur->right);
-
-			return retval;
-		} else {
-			// go left
-			int retval = _insert(heap, cur->left, new);
-
-			if (retval) {
-				cur->btmsk |= (1 << 2); // turn on go right
-				retval &= 0;
-			}
-
-			if ((heap->cmpfunc(cur->pri, cur->left->pri) > 0) == heap->min)
-				swap_nodes(cur, cur->left);
-
-			return 0;
-		}
-	} 
-}
-
 void heap_insert(heap_t *heap, void *pri, void *elem)
 {
 	node_t *new = node_new(pri, elem);
-	if (!heap->root)
-		heap->root = new;
-	else
-		_insert(heap, heap->root, new);
+	int n = heap->size - 1;
+	int level = 2;
+	convert(&n, &level);
+	heap->root = _insert(heap, heap->root, new, n, level);
 	++heap->size;
 }
 
@@ -160,6 +119,17 @@ static node_t *get_node(heap_t *heap, node_t *root)
 		return root->left;
 
 	return root->right;
+}
+
+static void swap_nodes(node_t *a, node_t *b)
+{
+	void *tmp = a->elem;
+	a->elem = b->elem;
+	b->elem = tmp;
+
+	tmp = a->pri;
+	a->pri = b->pri;
+	b->pri = tmp;
 }
 
 static node_t *_fix(heap_t *heap, node_t *node, int n, int l)
@@ -253,9 +223,7 @@ void *heap_del(heap_t *heap)
 		--heap->size;
 
 		free(oldroot);
-
-		if (!heap->size)
-			heap->root = NULL;
+		//printf("%p\n", heap->root);
 		return elem;
 	}
 	return NULL;

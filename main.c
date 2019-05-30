@@ -13,7 +13,7 @@ int main()
 	int len = 10;
 	int data[len];
 	srand(time(NULL));
-	heap_t *heap = heap_new((int(*)(void*,void*)) cmpfunc, 0);
+	heap_t *heap = heap_new((int(*)(void*,void*)) cmpfunc, 1);
 
 	for (int i = 0; i < len; ++i) {
 		data[i] = rand() % len;
@@ -21,7 +21,7 @@ int main()
 	}
 	heap_plot(heap);
 	getchar();
-	for (int i = 0; i < len - 1; ++i) {
+	for (int i = 0; i < len; ++i) {
 		printf("%d\n", *(int*)heap_del(heap));
 		heap_plot(heap);
 		getchar();
